@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STV File Converter — Audio & Video</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;900&family=Barlow:wght@300;400;500&display=swap');
+
+  :root {
+    --red: #E8001C;
+    --black: #0A0A0A;
+    --panel: #141414;
+    --border: #272727;
+    --white: #F0EDE8;
+    --muted: #777;
+    --green: #00C853;
+    --radius: 6px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Barlow', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  /* ── HEADER ── */
+  header {
+    width: 100%;
+    max-width: 640px;
+    margin-bottom: 2.5rem;
+    text-align: center;
+  }
+
+  .logo-eyebrow {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 0.7rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 0.6rem;
+  }
+
+  h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: clamp(2.2rem, 6vw, 3.2rem);
+    text-transform: uppercase;
+    line-height: 1;
+    margin-bottom: 0.6rem;
+  }
+
+  h1 span { color: var(--red); }
+
+  .header-sub {
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+
+  /* ── MAIN CARD ── */
+  .converter-card {
+    width: 100%;
+    max-width: 640px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  /* ── DROP ZONE ── */
+  .drop-zone {
+    padding: 2.5rem 2rem;
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.2s;
+    position: relative;
+  }
+
+  .drop-zone:hover, .drop-zone.drag-over {
+    background: #1a1a1a;
+  }
+
+  .drop-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Waveform animation */
+  .waveform {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    height: 48px;
+    margin-bottom: 1.25rem;
+  }
+
+  .wave-bar {
+    width: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    animation: none;
+    height: 8px;
+    transition: background 0.3s;
+  }
+
+  .drop-zone.has-file .wave-bar {
+    background: var(--red);
+    animation: wavePulse 1.2s ease-in-out infinite;
+  }
+
+  .wave-bar:nth-child(1)  { animation-delay: 0s;    }
+  .wave-bar:nth-child(2)  { animation-delay: 0.1s;  }
+  .wave-bar:nth-child(3)  { animation-delay: 0.2s;  }
+  .wave-bar:nth-child(4)  { animation-delay: 0.3s;  }
+  .wave-bar:nth-child(5)  { animation-delay: 0.15s; }
+  .wave-bar:nth-child(6)  { animation-delay: 0.05s; }
+  .wave-bar:nth-child(7)  { animation-delay: 0.25s; }
+  .wave-bar:nth-child(8)  { animation-delay: 0.35s; }
+  .wave-bar:nth-child(9)  { animation-delay: 0.1s;  }
+  .wave-bar:nth-child(10) { animation-delay: 0.2s;  }
+  .wave-bar:nth-child(11) { animation-delay: 0.3s;  }
+  .wave-bar:nth-child(12) { animation-delay: 0.0s;  }
+
+  @keyframes wavePulse {
+    0%, 100% { height: 8px; }
+    50% { height: 36px; }
+  }
+
+  .drop-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 0.35rem;
+  }
+
+  .drop-hint {
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+
+  .file-name-display {
+    margin-top: 0.75rem;
+    font-size: 0.82rem;
+    color: var(--green);
+    font-weight: 500;
+    min-height: 1.2em;
+    word-break: break-all;
+  }
+
+  /* ── OPTIONS ── */
+  .options-area {
+    padding: 1.75rem 2rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .options-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 0.72rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.9rem;
+    display: block;
+  }
+
+  /* Format pills */
+  .format-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .format-group-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+  }
+
+  .format-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .pill {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.45rem 1rem;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: 100px;
+    transition: all 0.15s;
+  }
+
+  .pill:hover { border-color: #444; color: var(--white); }
+
+  .pill.selected {
+    background: var(--red);
+    border-color: var(--red);
+    color: var(--white);
+  }
+
+  /* ── QUALITY ── */
+  .quality-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .quality-row select {
+    background: #1e1e1e;
+    border: 1px solid var(--border);
+    color: var(--white);
+    font-family: 'Barlow', sans-serif;
+    font-size: 0.85rem;
+    padding: 0.5rem 0.85rem;
+    border-radius: var(--radius);
+    appearance: none;
+    cursor: pointer;
+    flex: 1;
+    min-width: 160px;
+  }
+
+  .quality-row select:focus { outline: none; border-color: var(--red); }
+
+  /* ── CONVERT BUTTON ── */
+  .convert-area {
+    padding: 1.5rem 2rem;
+  }
+
+  .convert-btn {
+    width: 100%;
+    background: var(--red);
+    color: var(--white);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 1rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    border: none;
+    padding: 1rem;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+  }
+
+  .convert-btn:hover:not(:disabled) { background: #b5001b; transform: translateY(-1px); }
+  .convert-btn:disabled { background: #2a2a2a; color: var(--muted); cursor: not-allowed; }
+
+  /* ── STATUS ── */
+  .status-area {
+    padding: 0 2rem 1.5rem;
+    display: none;
+  }
+
+  .status-area.visible { display: block; }
+
+  .status-line {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--muted);
+    flex-shrink: 0;
+  }
+
+  .status-dot.active { background: var(--red); animation: blink 1s infinite; }
+  .status-dot.done { background: var(--green); animation: none; }
+  .status-dot.error { background: #ff4444; animation: none; }
+
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  .progress-bar-wrap {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: var(--red);
+    width: 0%;
+    transition: width 0.3s;
+    border-radius: 2px;
+  }
+
+  .progress-bar.done { background: var(--green); }
+
+  .download-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--green);
+    color: #000;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 0.65rem 1.4rem;
+    border-radius: var(--radius);
+    transition: opacity 0.2s;
+    display: none;
+  }
+
+  .download-btn:hover { opacity: 0.85; }
+
+  /* ── INFO PILLS ROW ── */
+  .info-row {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 1.25rem;
+    padding: 0 2rem 1.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .info-pill {
+    font-size: 0.72rem;
+    color: var(--muted);
+    background: #1a1a1a;
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 0.3rem 0.85rem;
+  }
+
+  /* ── FORMAT REFERENCE ── */
+  .format-ref {
+    padding: 1.5rem 2rem;
+  }
+
+  .format-ref summary {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .format-ref summary::after { content: '▾'; }
+  .format-ref[open] summary::after { content: '▴'; }
+
+  .ref-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .ref-item {}
+
+  .ref-format {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    color: var(--white);
+    margin-bottom: 0.15rem;
+  }
+
+  .ref-desc {
+    font-size: 0.75rem;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  /* ── FOOTER ── */
+  .converter-footer {
+    margin-top: 1.5rem;
+    font-size: 0.75rem;
+    color: #383838;
+    text-align: center;
+  }
+
+  .converter-footer a { color: #444; text-decoration: none; }
+  .converter-footer a:hover { color: var(--muted); }
+
+  /* ── LOADING SCREEN ── */
+  #loadingScreen {
+    position: fixed;
+    inset: 0;
+    background: var(--black);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    gap: 1rem;
+  }
+
+  #loadingScreen.hidden { display: none; }
+
+  .loading-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 1.2rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+  }
+
+  .loading-sub {
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  .loading-bar-wrap {
+    width: 200px;
+    height: 2px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .loading-bar {
+    height: 100%;
+    background: var(--red);
+    width: 0%;
+    transition: width 0.4s;
+  }
+
+  @media (max-width: 480px) {
+    .ref-grid { grid-template-columns: 1fr; }
+    .quality-row { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOADING SCREEN -->
+<div id="loadingScreen">
+  <div class="loading-title">Loading Converter<span style="color:var(--red)">.</span></div>
+  <div class="loading-sub">Setting up your in-browser tools — just a moment</div>
+  <div class="loading-bar-wrap"><div class="loading-bar" id="loadingBar"></div></div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <p class="logo-eyebrow">STV Radiomeltdown · G4E Tools</p>
+  <h1>File <span>Convert</span></h1>
+  <p class="header-sub">Drop your audio or video — we'll flip it to whatever format you need. Free. Private. Nothing leaves your device.</p>
+</header>
+
+<!-- CONVERTER CARD -->
+<div class="converter-card">
+
+  <!-- DROP ZONE -->
+  <div class="drop-zone" id="dropZone">
+    <input type="file" id="fileInput" accept="audio/*,video/*,.mpeg,.mpg,.mpeg4,.mov,.mkv,.flv,.wmv,.aac,.flac,.ogg,.opus,.wma,.m4a,.m4v,.mp4,.mp3,.wav">
+    <div class="waveform" id="waveform">
+      <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+      <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+      <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+      <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+    </div>
+    <div class="drop-label" id="dropLabel">Drop your file here</div>
+    <div class="drop-hint">or click to browse · audio & video · up to 2GB</div>
+    <div class="file-name-display" id="fileNameDisplay"></div>
+  </div>
+
+  <!-- FORMAT OPTIONS -->
+  <div class="options-area">
+    <span class="options-label">Convert to</span>
+    <div class="format-groups">
+      <div>
+        <div class="format-group-label">🎵 Audio</div>
+        <div class="format-pills">
+          <button class="pill" data-format="mp3" data-type="audio">MP3</button>
+          <button class="pill" data-format="wav" data-type="audio">WAV</button>
+          <button class="pill" data-format="aac" data-type="audio">AAC</button>
+          <button class="pill" data-format="flac" data-type="audio">FLAC</button>
+          <button class="pill" data-format="ogg" data-type="audio">OGG</button>
+          <button class="pill" data-format="m4a" data-type="audio">M4A</button>
+          <button class="pill" data-format="opus" data-type="audio">OPUS</button>
+        </div>
+      </div>
+      <div>
+        <div class="format-group-label">🎬 Video</div>
+        <div class="format-pills">
+          <button class="pill" data-format="mp4" data-type="video">MP4</button>
+          <button class="pill" data-format="mov" data-type="video">MOV</button>
+          <button class="pill" data-format="webm" data-type="video">WEBM</button>
+          <button class="pill" data-format="mkv" data-type="video">MKV</button>
+          <button class="pill" data-format="avi" data-type="video">AVI</button>
+          <button class="pill" data-format="gif" data-type="video">GIF</button>
+        </div>
+      </div>
+      <div>
+        <div class="format-group-label">🎙 Extract Audio from Video</div>
+        <div class="format-pills">
+          <button class="pill" data-format="mp3" data-type="extract">MP3 from video</button>
+          <button class="pill" data-format="wav" data-type="extract">WAV from video</button>
+          <button class="pill" data-format="aac" data-type="extract">AAC from video</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="quality-row">
+      <select id="qualitySelect">
+        <option value="high">High quality</option>
+        <option value="medium" selected>Medium quality (smaller file)</option>
+        <option value="low">Low quality (smallest file)</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- CONVERT BUTTON -->
+  <div class="convert-area">
+    <button class="convert-btn" id="convertBtn" disabled>Choose a file and format first</button>
+  </div>
+
+  <!-- STATUS -->
+  <div class="status-area" id="statusArea">
+    <div class="status-line">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">Starting up...</span>
+    </div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <a class="download-btn" id="downloadBtn" download>⬇ Download Your File</a>
+  </div>
+
+  <!-- INFO ROW -->
+  <div class="info-row">
+    <span class="info-pill">🔒 Nothing uploads anywhere</span>
+    <span class="info-pill">⚡ Runs in your browser</span>
+    <span class="info-pill">📁 Works offline once loaded</span>
+  </div>
+
+  <!-- FORMAT GUIDE -->
+  <div class="format-ref">
+    <details>
+      <summary>Not sure which format to pick?</summary>
+      <div class="ref-grid">
+        <div class="ref-item">
+          <div class="ref-format">MP3</div>
+          <div class="ref-desc">Best for music and podcasts. Plays everywhere. Smaller file size.</div>
+        </div>
+        <div class="ref-item">
+          <div class="ref-format">WAV</div>
+          <div class="ref-desc">Uncompressed audio. Best for recording studios and editing.</div>
+        </div>
+        <div class="ref-item">
+          <div class="ref-format">AAC / M4A</div>
+          <div class="ref-desc">Apple's format. Great quality at smaller sizes. Good for phones.</div>
+        </div>
+        <div class="ref-item">
+          <div class="ref-format">FLAC</div>
+          <div class="ref-desc">Lossless — full quality, no compression. Bigger file, perfect sound.</div>
+        </div>
+        <div class="ref-item">
+          <div class="ref-format">MP4</div>
+          <div class="ref-desc">Standard video. Works on phones, web, social media, everywhere.</div>
+        </div>
+        <div class="ref-item">
+          <div class="ref-format">MOV</div>
+          <div class="ref-desc">Apple's video format. Best for editing in iMovie or Final Cut.</div>
+        </div>
+        <div class="ref-item">
+          <div class="ref-format">WEBM</div>
+          <div class="ref-desc">Web-optimized video. Smaller file, great for websites and streaming.</div>
+        </div>
+        <div class="ref-item">
+          <div class="ref-format">GIF</div>
+          <div class="ref-desc">Short animated clip, no sound. Good for social media loops.</div>
+        </div>
+      </div>
+    </details>
+  </div>
+
+</div>
+
+<!-- SUBMIT YOUR MUSIC / AD SECTION -->
+<div class="converter-card" style="margin-top: 1.5rem;">
+
+  <div style="padding: 2rem 2rem 0;">
+    <p class="options-label">📻 Want to be heard?</p>
+    <div style="font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:clamp(1.4rem,4vw,2rem); text-transform:uppercase; line-height:1; margin-bottom:0.5rem;">
+      Submit Your Music or Ad<span style="color:var(--red)">.</span>
+    </div>
+    <p style="font-size:0.88rem; color:var(--muted); line-height:1.6; margin-bottom:1.5rem;">
+      Got a track ready for air? Running an ad campaign? Send it directly to the House of Media team and we'll get it on the STV network. Convert your file above first if you need to, then hit send.
+    </p>
+  </div>
+
+  <!-- SUBMISSION FORM -->
+  <div style="padding: 0 2rem 2rem; display:flex; flex-direction:column; gap:0.85rem;" id="submitForm">
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;" class="submit-grid">
+      <div>
+        <label style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:0.68rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--muted); display:block; margin-bottom:0.4rem;">Your Name</label>
+        <input id="subName" type="text" placeholder="Artist or business name"
+          style="width:100%; background:#1a1a1a; border:1px solid var(--border); color:var(--white); font-family:'Barlow',sans-serif; font-size:0.85rem; padding:0.6rem 0.85rem; border-radius:var(--radius); outline:none;"
+          onfocus="this.style.borderColor='var(--red)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <div>
+        <label style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:0.68rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--muted); display:block; margin-bottom:0.4rem;">Your Email</label>
+        <input id="subEmail" type="email" placeholder="So we can follow up"
+          style="width:100%; background:#1a1a1a; border:1px solid var(--border); color:var(--white); font-family:'Barlow',sans-serif; font-size:0.85rem; padding:0.6rem 0.85rem; border-radius:var(--radius); outline:none;"
+          onfocus="this.style.borderColor='var(--red)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+    </div>
+
+    <div>
+      <label style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:0.68rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--muted); display:block; margin-bottom:0.4rem;">What are you sending?</label>
+      <div style="display:flex; gap:0.5rem; flex-wrap:wrap;" id="submitTypeRow">
+        <button class="sub-type-btn" data-val="Music Track" onclick="selectSubType(this)" style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:0.78rem; letter-spacing:0.1em; text-transform:uppercase; padding:0.45rem 1rem; border:1px solid var(--border); background:transparent; color:var(--muted); cursor:pointer; border-radius:100px; transition:all 0.15s;">🎵 Music Track</button>
+        <button class="sub-type-btn" data-val="Radio Ad" onclick="selectSubType(this)" style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:0.78rem; letter-spacing:0.1em; text-transform:uppercase; padding:0.45rem 1rem; border:1px solid var(--border); background:transparent; color:var(--muted); cursor:pointer; border-radius:100px; transition:all 0.15s;">📢 Radio Ad</button>
+        <button class="sub-type-btn" data-val="Jingle / Promo" onclick="selectSubType(this)" style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:0.78rem; letter-spacing:0.1em; text-transform:uppercase; padding:0.45rem 1rem; border:1px solid var(--border); background:transparent; color:var(--muted); cursor:pointer; border-radius:100px; transition:all 0.15s;">🎙 Jingle / Promo</button>
+        <button class="sub-type-btn" data-val="Other" onclick="selectSubType(this)" style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:0.78rem; letter-spacing:0.1em; text-transform:uppercase; padding:0.45rem 1rem; border:1px solid var(--border); background:transparent; color:var(--muted); cursor:pointer; border-radius:100px; transition:all 0.15s;">Other</button>
+      </div>
+    </div>
+
+    <div>
+      <label style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:0.68rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--muted); display:block; margin-bottom:0.4rem;">Tell us about it</label>
+      <textarea id="subMessage" rows="3" placeholder="Song name, genre, what you're promoting, how often you'd like it to air — whatever helps us help you."
+        style="width:100%; background:#1a1a1a; border:1px solid var(--border); color:var(--white); font-family:'Barlow',sans-serif; font-size:0.85rem; padding:0.6rem 0.85rem; border-radius:var(--radius); outline:none; resize:vertical;"
+        onfocus="this.style.borderColor='var(--red)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+    </div>
+
+    <button onclick="submitToHouseOfMedia()"
+      style="width:100%; background:transparent; border:2px solid var(--red); color:var(--red); font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:1rem; letter-spacing:0.15em; text-transform:uppercase; padding:0.95rem; border-radius:var(--radius); cursor:pointer; transition:all 0.2s;"
+      onmouseover="this.style.background='var(--red)';this.style.color='var(--white)'"
+      onmouseout="this.style.background='transparent';this.style.color='var(--red)'">
+      📨 Send to House of Media
+    </button>
+
+    <p id="submitNote" style="font-size:0.75rem; color:var(--muted); text-align:center; display:none;">
+      Opens your email app with everything filled in. Attach your converted file before you hit send.
+    </p>
+
+  </div>
+
+  <div style="border-top:1px solid var(--border); padding:1rem 2rem; display:flex; align-items:center; gap:0.75rem;">
+    <span style="font-size:1.1rem;">✉️</span>
+    <span style="font-size:0.78rem; color:var(--muted);">Submissions go directly to <a href="mailto:houseofmedia.marketing@hmail.com" style="color:var(--white); text-decoration:none;">houseofmedia.marketing@hmail.com</a> · G4E Movement Studio · Lithonia, GA</span>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="converter-footer">
+  Powered by FFmpeg · STV Radiomeltdown · <a href="https://radiomeltdown.com" target="_blank">radiomeltdown.com</a>
+</div>
+
+<style>
+  @media (max-width: 480px) {
+    .submit-grid { grid-template-columns: 1fr !important; }
+  }
+</style>
+
+<script>
+  let selectedSubType = '';
+
+  function selectSubType(btn) {
+    document.querySelectorAll('.sub-type-btn').forEach(b => {
+      b.style.background = 'transparent';
+      b.style.borderColor = 'var(--border)';
+      b.style.color = 'var(--muted)';
+    });
+    btn.style.background = 'var(--red)';
+    btn.style.borderColor = 'var(--red)';
+    btn.style.color = 'var(--white)';
+    selectedSubType = btn.dataset.val;
+  }
+
+  function submitToHouseOfMedia() {
+    const name    = document.getElementById('subName').value.trim();
+    const email   = document.getElementById('subEmail').value.trim();
+    const message = document.getElementById('subMessage').value.trim();
+    const type    = selectedSubType || 'Submission';
+
+    const subject = encodeURIComponent(`[${type}] ${name || 'New Submission'} — STV Radiomeltdown`);
+
+    const body = encodeURIComponent(
+      `Hi House of Media team,\n\n` +
+      `Name: ${name || '—'}\n` +
+      `Reply-to: ${email || '—'}\n` +
+      `Type: ${type}\n\n` +
+      `${message || 'No additional notes.'}\n\n` +
+      `— Submitted via STV File Converter`
+    );
+
+    window.location.href = `mailto:houseofmedia.marketing@hmail.com?subject=${subject}&body=${body}`;
+
+    document.getElementById('submitNote').style.display = 'block';
+  }
+</script>
+
+<script>
+// ── LOAD FFMPEG ──
+const { createFFmpeg, fetchFile } = FFmpeg;
+let ffmpeg = null;
+let selectedFile = null;
+let selectedFormat = null;
+let selectedType = null; // 'audio', 'video', 'extract'
+
+// Fake loading bar
+const loadingBar = document.getElementById('loadingBar');
+let prog = 0;
+const loadInterval = setInterval(() => {
+  prog = Math.min(prog + Math.random() * 8, 88);
+  loadingBar.style.width = prog + '%';
+}, 200);
+
+async function initFFmpeg() {
+  ffmpeg = createFFmpeg({
+    log: false,
+    corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js',
+    progress: ({ ratio }) => {
+      const pct = Math.round(ratio * 100);
+      document.getElementById('progressBar').style.width = pct + '%';
+      if (pct < 100) {
+        setStatus('active', `Converting... ${pct}%`);
+      }
+    }
+  });
+  await ffmpeg.load();
+  clearInterval(loadInterval);
+  loadingBar.style.width = '100%';
+  setTimeout(() => {
+    document.getElementById('loadingScreen').classList.add('hidden');
+  }, 400);
+}
+
+initFFmpeg().catch(err => {
+  clearInterval(loadInterval);
+  document.getElementById('loadingScreen').classList.add('hidden');
+  console.warn('FFmpeg load error:', err);
+});
+
+// ── DROP ZONE ──
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) handleFile(file);
+});
+
+fileInput.addEventListener('change', () => {
+  if (fileInput.files[0]) handleFile(fileInput.files[0]);
+});
+
+function handleFile(file) {
+  selectedFile = file;
+  dropZone.classList.add('has-file');
+  document.getElementById('dropLabel').textContent = 'File loaded ✓';
+  document.getElementById('fileNameDisplay').textContent = file.name + ' — ' + formatBytes(file.size);
+  checkReady();
+}
+
+// ── FORMAT PILLS ──
+document.querySelectorAll('.pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    document.querySelectorAll('.pill').forEach(p => p.classList.remove('selected'));
+    pill.classList.add('selected');
+    selectedFormat = pill.dataset.format;
+    selectedType = pill.dataset.type;
+    checkReady();
+  });
+});
+
+function checkReady() {
+  const btn = document.getElementById('convertBtn');
+  if (selectedFile && selectedFormat) {
+    btn.disabled = false;
+    btn.textContent = `Convert to ${selectedFormat.toUpperCase()} →`;
+  } else if (selectedFile) {
+    btn.disabled = true;
+    btn.textContent = 'Now pick a format above';
+  } else {
+    btn.disabled = true;
+    btn.textContent = 'Choose a file and format first';
+  }
+}
+
+// ── CONVERT ──
+document.getElementById('convertBtn').addEventListener('click', convert);
+
+async function convert() {
+  if (!ffmpeg || !selectedFile || !selectedFormat) return;
+
+  const statusArea = document.getElementById('statusArea');
+  statusArea.classList.add('visible');
+  document.getElementById('convertBtn').disabled = true;
+  document.getElementById('downloadBtn').style.display = 'none';
+  document.getElementById('progressBar').classList.remove('done');
+  document.getElementById('progressBar').style.width = '0%';
+
+  setStatus('active', 'Reading your file...');
+
+  try {
+    const inputName = 'input.' + getExtension(selectedFile.name);
+    const outputName = 'output.' + selectedFormat;
+
+    ffmpeg.FS('writeFile', inputName, await fetchFile(selectedFile));
+
+    const args = buildArgs(inputName, outputName, selectedFormat, selectedType);
+
+    setStatus('active', 'Converting — this may take a moment for large files...');
+    await ffmpeg.run(...args);
+
+    const data = ffmpeg.FS('readFile', outputName);
+    const blob = new Blob([data.buffer], { type: getMimeType(selectedFormat) });
+    const url = URL.createObjectURL(blob);
+
+    const dl = document.getElementById('downloadBtn');
+    dl.href = url;
+    dl.download = getBaseName(selectedFile.name) + '.' + selectedFormat;
+    dl.style.display = 'inline-flex';
+
+    document.getElementById('progressBar').style.width = '100%';
+    document.getElementById('progressBar').classList.add('done');
+    setStatus('done', `Done! Your ${selectedFormat.toUpperCase()} file is ready — ${formatBytes(blob.size)}`);
+
+    // cleanup
+    try { ffmpeg.FS('unlink', inputName); } catch(e) {}
+    try { ffmpeg.FS('unlink', outputName); } catch(e) {}
+
+  } catch (err) {
+    setStatus('error', 'Something went wrong. Try a different file or format.');
+    console.error(err);
+  }
+
+  document.getElementById('convertBtn').disabled = false;
+}
+
+function buildArgs(input, output, fmt, type) {
+  const quality = document.getElementById('qualitySelect').value;
+
+  // Audio quality mapping
+  const audioQ = { high: '192k', medium: '128k', low: '64k' };
+  const videoQ = { high: '18', medium: '23', low: '28' }; // CRF values
+
+  const bitrate = audioQ[quality];
+  const crf = videoQ[quality];
+
+  if (type === 'extract') {
+    // Extract audio from video
+    return ['-i', input, '-vn', '-ar', '44100', '-ac', '2', '-b:a', bitrate, output];
+  }
+
+  if (fmt === 'mp3') return ['-i', input, '-vn', '-ar', '44100', '-ac', '2', '-b:a', bitrate, output];
+  if (fmt === 'wav') return ['-i', input, '-vn', '-ar', '44100', '-ac', '2', output];
+  if (fmt === 'aac') return ['-i', input, '-vn', '-c:a', 'aac', '-b:a', bitrate, output];
+  if (fmt === 'flac') return ['-i', input, '-vn', '-c:a', 'flac', output];
+  if (fmt === 'ogg') return ['-i', input, '-vn', '-c:a', 'libvorbis', '-b:a', bitrate, output];
+  if (fmt === 'm4a') return ['-i', input, '-vn', '-c:a', 'aac', '-b:a', bitrate, output];
+  if (fmt === 'opus') return ['-i', input, '-vn', '-c:a', 'libopus', '-b:a', bitrate, output];
+  if (fmt === 'mp4') return ['-i', input, '-c:v', 'libx264', '-crf', crf, '-preset', 'fast', '-c:a', 'aac', '-b:a', bitrate, output];
+  if (fmt === 'mov') return ['-i', input, '-c:v', 'libx264', '-crf', crf, '-preset', 'fast', '-c:a', 'aac', output];
+  if (fmt === 'webm') return ['-i', input, '-c:v', 'libvpx-vp9', '-crf', crf, '-b:v', '0', '-c:a', 'libopus', output];
+  if (fmt === 'mkv') return ['-i', input, '-c:v', 'libx264', '-crf', crf, '-c:a', 'aac', output];
+  if (fmt === 'avi') return ['-i', input, '-c:v', 'libx264', '-crf', crf, '-c:a', 'mp3', output];
+  if (fmt === 'gif') return ['-i', input, '-vf', 'fps=12,scale=480:-1:flags=lanczos', '-loop', '0', output];
+
+  return ['-i', input, output];
+}
+
+function setStatus(state, text) {
+  const dot = document.getElementById('statusDot');
+  dot.className = 'status-dot ' + state;
+  document.getElementById('statusText').textContent = text;
+}
+
+function getExtension(filename) {
+  return filename.split('.').pop().toLowerCase() || 'bin';
+}
+
+function getBaseName(filename) {
+  return filename.replace(/\.[^/.]+$/, '');
+}
+
+function getMimeType(fmt) {
+  const map = {
+    mp3: 'audio/mpeg', wav: 'audio/wav', aac: 'audio/aac',
+    flac: 'audio/flac', ogg: 'audio/ogg', m4a: 'audio/mp4',
+    opus: 'audio/opus', mp4: 'video/mp4', mov: 'video/quicktime',
+    webm: 'video/webm', mkv: 'video/x-matroska', avi: 'video/x-msvideo',
+    gif: 'image/gif'
+  };
+  return map[fmt] || 'application/octet-stream';
+}
+
+function formatBytes(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / 1048576).toFixed(1) + ' MB';
+}
+</script>
+
+<!-- FFmpeg.wasm -->
+<script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+
+</body>
+</html>
