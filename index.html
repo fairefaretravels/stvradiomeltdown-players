@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>STV Radiomeltdown — Players</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;400;600&display=swap" rel="stylesheet" />
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0c0c0c;
+  --surface: #141414;
+  --border: rgba(255,255,255,0.08);
+  --text: #f0ede6;
+  --muted: #666;
+  --red: #e8785a;
+  --gold: #d4a843;
+  --fit: #4caf82;
+  --night: #7b8fcc;
+  --static: #a259f7;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Barlow Condensed', -apple-system, sans-serif;
+  min-height: 100vh;
+  padding: 0 0 4rem;
+}
+
+/* ── VIDEO SCROLLER ── */
+.video-scroller-wrap {
+  width: 100%;
+  padding: 1.5rem 1.5rem 0;
+}
+
+.video-scroller {
+  position: relative;
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 2px solid rgba(232,120,90,0.5);
+  box-shadow:
+    0 0 18px rgba(232,120,90,0.35),
+    0 0 50px rgba(212,168,67,0.18),
+    0 0 90px rgba(232,120,90,0.1);
+  background: #000;
+  aspect-ratio: 16 / 9;
+}
+
+.video-scroller video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: none;
+}
+.video-scroller video.active { display: block; }
+
+/* dot nav */
+.video-dots {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+.video-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  border: 1.5px solid var(--muted);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+.video-dot.active {
+  background: var(--red);
+  border-color: var(--red);
+  box-shadow: 0 0 8px rgba(232,120,90,0.6);
+}
+
+/* prev/next arrows */
+.video-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0,0,0,0.55);
+  border: 0.5px solid rgba(255,255,255,0.15);
+  color: var(--text);
+  font-size: 20px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: background 0.2s;
+  user-select: none;
+}
+.video-arrow:hover { background: rgba(232,120,90,0.5); }
+.video-arrow.prev { left: 12px; }
+.video-arrow.next { right: 12px; }
+
+/* ── HEADER ── */
+.header {
+  text-align: center;
+  padding: 2.5rem 1.5rem 0;
+  margin-bottom: 2.5rem;
+}
+.header-eye {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.header-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(36px, 8vw, 64px);
+  letter-spacing: 0.06em;
+  line-height: 1;
+  color: var(--text);
+}
+.header-title span { color: var(--red); }
+.header-sub {
+  font-size: 14px;
+  font-weight: 300;
+  color: var(--muted);
+  letter-spacing: 0.12em;
+  margin-top: 10px;
+}
+.divider {
+  width: 40px;
+  height: 1px;
+  background: var(--border);
+  margin: 1.5rem auto;
+}
+
+/* ── QR GRID ── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.card {
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.2s;
+}
+.card:hover { border-color: rgba(255,255,255,0.18); }
+
+.card-header {
+  padding: 20px 20px 16px;
+  border-bottom: 0.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.card-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.card-info { flex: 1; }
+.card-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 0.05em;
+  line-height: 1;
+}
+.card-desc {
+  font-size: 11px;
+  font-weight: 300;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  margin-top: 3px;
+}
+.card-qr {
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  background: #fff;
+}
+.card-qr canvas,
+.card-qr img { display: block; }
+.card-footer {
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.card-url {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+.btn-open {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: 6px 14px;
+  border-radius: 4px;
+  border: 0.5px solid;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.btn-download {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border-radius: 4px;
+  border: 0.5px solid rgba(255,255,255,0.15);
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.btn-download:hover { border-color: rgba(255,255,255,0.3); color: var(--text); }
+
+.red .card-dot { background: var(--red); }
+.red .card-name { color: var(--red); }
+.red .btn-open { color: var(--red); border-color: var(--red); }
+.red .btn-open:hover { background: var(--red); color: #0c0c0c; }
+
+.gold .card-dot { background: var(--gold); }
+.gold .card-name { color: var(--gold); }
+.gold .btn-open { color: var(--gold); border-color: var(--gold); }
+.gold .btn-open:hover { background: var(--gold); color: #0c0c0c; }
+
+.fit .card-dot { background: var(--fit); }
+.fit .card-name { color: var(--fit); }
+.fit .btn-open { color: var(--fit); border-color: var(--fit); }
+.fit .btn-open:hover { background: var(--fit); color: #0c0c0c; }
+
+.night .card-dot { background: var(--night); }
+.night .card-name { color: var(--night); }
+.night .btn-open { color: var(--night); border-color: var(--night); }
+.night .btn-open:hover { background: var(--night); color: #0c0c0c; }
+
+/* ── SECTION DIVIDER ── */
+.section-label {
+  text-align: center;
+  margin: 3rem auto 1.5rem;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ── PLAYLIST BOXES ── */
+.playlist-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.playlist-card {
+  background: var(--surface);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 0.5px solid var(--border);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.playlist-card:hover {
+  border-color: rgba(255,255,255,0.2);
+}
+
+.playlist-card.love { border-color: rgba(123,143,204,0.35); }
+.playlist-card.love:hover {
+  box-shadow: 0 0 24px rgba(123,143,204,0.2);
+  border-color: rgba(123,143,204,0.6);
+}
+.playlist-card.static-card { border-color: rgba(162,89,247,0.35); }
+.playlist-card.static-card:hover {
+  box-shadow: 0 0 24px rgba(162,89,247,0.2);
+  border-color: rgba(162,89,247,0.6);
+}
+
+.playlist-header {
+  padding: 18px 20px 14px;
+  border-bottom: 0.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.playlist-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.love .playlist-dot { background: var(--night); box-shadow: 0 0 8px rgba(123,143,204,0.6); }
+.static-card .playlist-dot { background: var(--static); box-shadow: 0 0 8px rgba(162,89,247,0.6); }
+
+.playlist-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 24px;
+  letter-spacing: 0.06em;
+  line-height: 1;
+}
+.love .playlist-title { color: var(--night); }
+.static-card .playlist-title { color: var(--static); }
+
+.playlist-sub {
+  font-size: 11px;
+  font-weight: 300;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  margin-top: 3px;
+}
+
+.playlist-embed {
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: #000;
+  display: block;
+  border: none;
+}
+
+.playlist-footer {
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.playlist-footer span {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+}
+.btn-playlist {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: 6px 14px;
+  border-radius: 4px;
+  border: 0.5px solid;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.love .btn-playlist { color: var(--night); border-color: var(--night); }
+.love .btn-playlist:hover { background: var(--night); color: #0c0c0c; }
+.static-card .btn-playlist { color: var(--static); border-color: var(--static); }
+.static-card .btn-playlist:hover { background: var(--static); color: #0c0c0c; }
+
+/* ── AD CARD ── */
+.ad-wrap {
+  max-width: 1000px;
+  margin: 3rem auto 0;
+  padding: 0 1.5rem;
+}
+
+.ad-card {
+  background: linear-gradient(135deg, #0f0f0f 0%, #181414 60%, #150e0e 100%);
+  border: 0.5px solid rgba(232,120,90,0.3);
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 40px rgba(232,120,90,0.08);
+}
+
+.ad-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+
+.ad-left {
+  padding: 2.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1rem;
+  border-right: 0.5px solid rgba(232,120,90,0.15);
+}
+
+.ad-eyebrow {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+
+.ad-headline {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(28px, 5vw, 48px);
+  letter-spacing: 0.04em;
+  line-height: 1.05;
+  color: var(--text);
+}
+.ad-headline em {
+  font-style: normal;
+  color: var(--gold);
+}
+
+.ad-body {
+  font-size: 13px;
+  font-weight: 300;
+  color: #999;
+  line-height: 1.6;
+  letter-spacing: 0.04em;
+  max-width: 280px;
+}
+
+.ad-cta {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: 10px 22px;
+  border-radius: 5px;
+  background: var(--red);
+  color: #0c0c0c;
+  align-self: flex-start;
+  transition: opacity 0.15s, transform 0.15s;
+}
+.ad-cta:hover { opacity: 0.88; transform: translateY(-1px); }
+
+.ad-right {
+  padding: 2.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.2rem;
+}
+
+.ad-station {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.03);
+  border: 0.5px solid rgba(255,255,255,0.06);
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+.ad-station:hover {
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(255,255,255,0.15);
+}
+.ad-station-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.ad-station-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  letter-spacing: 0.05em;
+  flex: 1;
+}
+.ad-station-tag {
+  font-size: 10px;
+  font-weight: 300;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+}
+
+@media (max-width: 600px) {
+  .ad-inner {
+    grid-template-columns: 1fr;
+  }
+  .ad-left {
+    border-right: none;
+    border-bottom: 0.5px solid rgba(232,120,90,0.15);
+    padding: 1.8rem 1.5rem;
+  }
+  .ad-right { padding: 1.5rem; }
+}
+
+/* ── MELTDOWN LINK ── */
+.meltdown-link-wrap {
+  text-align: center;
+  margin: 2.5rem auto 0;
+  padding: 0 1.5rem;
+}
+.meltdown-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 0.1em;
+  color: var(--text);
+  text-decoration: none;
+  border-bottom: 1.5px solid rgba(232,120,90,0.4);
+  padding-bottom: 4px;
+  transition: color 0.2s, border-color 0.2s;
+}
+.meltdown-link:hover { color: var(--red); border-color: var(--red); }
+.meltdown-link-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+  text-align: center;
+  margin-top: 3rem;
+}
+
+/* ── FOOTER ── */
+.footer-bar {
+  text-align: center;
+  margin-top: 3rem;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 520px) {
+  .grid { grid-template-columns: 1fr; }
+  .playlist-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════ VIDEO SCROLLER ══════════ -->
+<div class="video-scroller-wrap">
+  <div class="video-scroller" id="videoScroller">
+    <button class="video-arrow prev" onclick="changeVideo(-1)">&#8249;</button>
+
+    <video class="active" id="vid-0" autoplay muted loop playsinline>
+      <source src="mov-1.mov" type="video/mp4" />
+      <source src="mov-1.mov" type="video/quicktime" />
+    </video>
+    <video id="vid-1" muted loop playsinline>
+      <source src="mov-2.mov" type="video/mp4" />
+      <source src="mov-2.mov" type="video/quicktime" />
+    </video>
+    <video id="vid-2" muted loop playsinline>
+      <source src="mov-3.mov" type="video/mp4" />
+      <source src="mov-3.mov" type="video/quicktime" />
+    </video>
+
+    <button class="video-arrow next" onclick="changeVideo(1)">&#8250;</button>
+  </div>
+  <div class="video-dots">
+    <div class="video-dot active" onclick="goToVideo(0)"></div>
+    <div class="video-dot" onclick="goToVideo(1)"></div>
+    <div class="video-dot" onclick="goToVideo(2)"></div>
+  </div>
+</div>
+
+<!-- ══════════ HEADER ══════════ -->
+<div class="header">
+  <p class="header-eye">STV Radiomeltdown</p>
+  <h1 class="header-title">The <span>Players</span></h1>
+  <p class="header-sub">Scan to open · Four stations · One network</p>
+  <div class="divider"></div>
+</div>
+
+<!-- ══════════ QR GRID ══════════ -->
+<div class="grid">
+  <div class="card red">
+    <div class="card-header">
+      <div class="card-dot"></div>
+      <div class="card-info">
+        <div class="card-name">STV Red</div>
+        <div class="card-desc">Original station</div>
+      </div>
+    </div>
+    <div class="card-qr" id="qr-red"></div>
+    <div class="card-footer">
+      <span class="card-url">stvradiomeltdown</span>
+      <button class="btn-download" onclick="dl('qr-red','stv-red')">Save QR</button>
+      <a class="btn-open" href="https://fairefaretravels.github.io/stvradiomeltdown/" target="_blank" rel="noopener">Open</a>
+    </div>
+  </div>
+
+  <div class="card gold">
+    <div class="card-header">
+      <div class="card-dot"></div>
+      <div class="card-info">
+        <div class="card-name">STV Gold</div>
+        <div class="card-desc">Premium edition</div>
+      </div>
+    </div>
+    <div class="card-qr" id="qr-gold"></div>
+    <div class="card-footer">
+      <span class="card-url">stvradiomeltdown-Gold</span>
+      <button class="btn-download" onclick="dl('qr-gold','stv-gold')">Save QR</button>
+      <a class="btn-open" href="https://fairefaretravels.github.io/stvradiomeltdown-Gold/" target="_blank" rel="noopener">Open</a>
+    </div>
+  </div>
+
+  <div class="card fit">
+    <div class="card-header">
+      <div class="card-dot"></div>
+      <div class="card-info">
+        <div class="card-name">STV Fit</div>
+        <div class="card-desc">Movement &amp; energy</div>
+      </div>
+    </div>
+    <div class="card-qr" id="qr-fit"></div>
+    <div class="card-footer">
+      <span class="card-url">stvradiomeltdown-fit</span>
+      <button class="btn-download" onclick="dl('qr-fit','stv-fit')">Save QR</button>
+      <a class="btn-open" href="https://fairefaretravels.github.io/stvradiomeltdown-fit/" target="_blank" rel="noopener">Open</a>
+    </div>
+  </div>
+
+  <div class="card night">
+    <div class="card-header">
+      <div class="card-dot"></div>
+      <div class="card-info">
+        <div class="card-name">Love &amp; Co.</div>
+        <div class="card-desc">Night cruise</div>
+      </div>
+    </div>
+    <div class="card-qr" id="qr-night"></div>
+    <div class="card-footer">
+      <span class="card-url">loveandcompany</span>
+      <button class="btn-download" onclick="dl('qr-night','stv-loveandcompany')">Save QR</button>
+      <a class="btn-open" href="https://fairefaretravels.github.io/stvradiomeltdown-loveandcompany/" target="_blank" rel="noopener">Open</a>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ PLAYLIST BOXES ══════════ -->
+<p class="section-label">Now Playing on STV</p>
+<div class="playlist-row">
+
+  <!-- LOVE & CO -->
+  <div class="playlist-card love">
+    <div class="playlist-header">
+      <div class="playlist-dot"></div>
+      <div>
+        <div class="playlist-title">Love &amp; Co</div>
+        <div class="playlist-sub">Late night · Soul · Slow jams</div>
+      </div>
+    </div>
+    <iframe
+      class="playlist-embed"
+      src="https://www.youtube.com/embed/videoseries?list=PLQ9p6GARi5fCwyLtEjrVWXyPXLzExEhTw&autoplay=0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen
+      title="Love &amp; Co Playlist"
+    ></iframe>
+    <div class="playlist-footer">
+      <span>YouTube Playlist</span>
+      <a class="btn-playlist" href="https://youtube.com/playlist?list=PLQ9p6GARi5fCwyLtEjrVWXyPXLzExEhTw" target="_blank" rel="noopener">Open Full</a>
+    </div>
+  </div>
+
+  <!-- THE STATIC -->
+  <div class="playlist-card static-card">
+    <div class="playlist-header">
+      <div class="playlist-dot"></div>
+      <div>
+        <div class="playlist-title">The Static</div>
+        <div class="playlist-sub">Noise · Frequency · Raw signal</div>
+      </div>
+    </div>
+    <iframe
+      class="playlist-embed"
+      src="https://www.youtube.com/embed/videoseries?list=PLQ9p6GARi5fDbBC-zfAVIv3-C64qefM_H&autoplay=0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen
+      title="The Static Playlist"
+    ></iframe>
+    <div class="playlist-footer">
+      <span>YouTube Playlist</span>
+      <a class="btn-playlist" href="https://youtube.com/playlist?list=PLQ9p6GARi5fDbBC-zfAVIv3-C64qefM_H" target="_blank" rel="noopener">Open Full</a>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════ AD CARD ══════════ -->
+<div class="ad-wrap">
+  <div class="ad-card">
+    <div class="ad-inner">
+      <div class="ad-left">
+        <span class="ad-eyebrow">Faire Fare Travels</span>
+        <h2 class="ad-headline">Go <em>Further.</em><br>Spend Smarter.</h2>
+        <p class="ad-body">Curated flights, hotels, and all-inclusive escapes — without the markup. One place for everything you need to book your next trip.</p>
+        <a class="ad-cta" href="https://fairefaretravels.github.io/agent-sanecamack/" target="_blank" rel="noopener">Start Planning</a>
+      </div>
+      <div class="ad-right">
+        <a class="ad-station" href="https://expedia.com/affiliates/fair_fare_travels" target="_blank" rel="noopener">
+          <div class="ad-station-dot" style="background:var(--red);"></div>
+          <span class="ad-station-name">Flights</span>
+          <span class="ad-station-tag">via Expedia →</span>
+        </a>
+        <a class="ad-station" href="https://www.hotels.com/affiliates/fair_fare_travels" target="_blank" rel="noopener">
+          <div class="ad-station-dot" style="background:var(--gold);"></div>
+          <span class="ad-station-name">Hotels</span>
+          <span class="ad-station-tag">via Hotels.com →</span>
+        </a>
+        <a class="ad-station" href="https://vrbo.com/affiliates/fair_fare_travels" target="_blank" rel="noopener">
+          <div class="ad-station-dot" style="background:var(--fit);"></div>
+          <span class="ad-station-name">All-Inclusive</span>
+          <span class="ad-station-tag">via Vrbo →</span>
+        </a>
+        <a class="ad-station" href="https://fairefaretravels.github.io/group-planner/" target="_blank" rel="noopener">
+          <div class="ad-station-dot" style="background:var(--night);"></div>
+          <span class="ad-station-name">Group Planner</span>
+          <span class="ad-station-tag">Stop the chat chaos →</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ RADIOMELTDOWN LINK ══════════ -->
+<p class="meltdown-link-label">The Full Network</p>
+<div class="meltdown-link-wrap">
+  <a class="meltdown-link" href="https://radiomeltdown.com" target="_blank" rel="noopener">
+    &#9641; Radiomeltdown.com
+  </a>
+</div>
+
+<!-- ══════════ FOOTER ══════════ -->
+<p class="footer-bar" style="margin-top:2rem;">STV Network &mdash; All four players</p>
+
+<script>
+/* ── QR CODES ── */
+const players = [
+  { id: 'qr-red',   url: 'https://fairefaretravels.github.io/stvradiomeltdown/' },
+  { id: 'qr-gold',  url: 'https://fairefaretravels.github.io/stvradiomeltdown-Gold/' },
+  { id: 'qr-fit',   url: 'https://fairefaretravels.github.io/stvradiomeltdown-fit/' },
+  { id: 'qr-night', url: 'https://fairefaretravels.github.io/stvradiomeltdown-loveandcompany/' }
+];
+players.forEach(p => {
+  new QRCode(document.getElementById(p.id), {
+    text: p.url,
+    width: 200,
+    height: 200,
+    colorDark: '#000000',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.H
+  });
+});
+
+function dl(id, name) {
+  setTimeout(() => {
+    const canvas = document.querySelector('#' + id + ' canvas');
+    if (!canvas) return;
+    const a = document.createElement('a');
+    a.download = name + '-qr.png';
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+  }, 100);
+}
+
+/* ── VIDEO SCROLLER ── */
+let currentVideo = 0;
+const videos = document.querySelectorAll('.video-scroller video');
+const dots = document.querySelectorAll('.video-dot');
+
+function goToVideo(n) {
+  videos[currentVideo].pause();
+  videos[currentVideo].classList.remove('active');
+  dots[currentVideo].classList.remove('active');
+  currentVideo = (n + videos.length) % videos.length;
+  videos[currentVideo].classList.add('active');
+  videos[currentVideo].play();
+  dots[currentVideo].classList.add('active');
+}
+
+function changeVideo(dir) {
+  goToVideo(currentVideo + dir);
+}
+
+/* auto-advance every 8s */
+setInterval(() => changeVideo(1), 8000);
+</script>
+</body>
+</html>
